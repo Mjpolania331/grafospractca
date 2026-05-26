@@ -583,6 +583,154 @@ class GrafoCampus:
 
             self.listaAdy[vertice2].append(conexionInversa)
 
+    def encontrarRuta(self, origen, destino, criterio='distancia'):
+
+        if origen not in self.listaAdy or destino not in self.listaAdy:
+            return (float('inf'), [])
+
+        distancias = {
+            vertice: float('inf')
+            for vertice in self.listaAdy
+        }
+
+        distancias[origen] = 0
+
+        visitados = []
+
+        predecesores = {
+            vertice: None
+            for vertice in self.listaAdy
+        }
+
+        verticeActual = origen
+
+        while verticeActual is not None and verticeActual != destino:
+
+            for conexion in self.listaAdy[verticeActual]:
+
+                vecino = conexion['destino']
+
+                if vecino in visitados:
+                    continue
+
+                if conexion['estado'] != 'disponible':
+                    continue
+
+                if criterio == 'accesible' and not conexion['accesible']:
+                    continue
+
+                if criterio == 'distancia':
+                    peso = conexion['distancia']
+
+                elif criterio == 'tiempo':
+                    peso = conexion['tiempo']
+
+                elif criterio == 'congestion':
+                    peso = conexion['congestion']
+
+                elif criterio == 'accesible':
+                    peso = conexion['distancia']
+
+                else:
+                    peso = conexion['distancia']
+
+                nuevaDistancia = distancias[verticeActual] + peso
+
+                if nuevaDistancia < distancias[vecino]:
+                    distancias[vecino] = nuevaDistancia
+                    predecesores[vecino] = verticeActual
+
+            visitados.append(verticeActual)
+
+            distanciaMenor = float('inf')
+            siguienteVertice = None
+
+            for vertice in distancias:
+
+                if vertice not in visitados:
+
+                    if distancias[vertice] < distanciaMenor:
+                        distanciaMenor = distancias[vertice]
+                        siguienteVertice = vertice
+
+            verticeActual = siguienteVertice
+
+        if distancias[destino] == float('inf'):
+            return (float('inf'), [])
+
+        camino = []
+        pasoActual = destino
+
+        while pasoActual is not None:
+            camino.insert(0, pasoActual)
+            pasoActual = predecesores[pasoActual]
+
+        return (distancias[destino], camino)
+
+    def explicarRuta(self, criterio):
+
+        if criterio == 'distancia':
+            return 'La ruta minimiza la distancia total.'
+
+        elif criterio == 'tiempo':
+            return 'La ruta minimiza el tiempo de recorrido.'
+
+        elif criterio == 'congestion':
+            return 'La ruta evita zonas congestionadas.'
+
+        elif criterio == 'accesible':
+            return 'La ruta solo usa caminos accesibles.'
+
+        return 'Ruta calculada.'
+
+    def arbolExpansionMinimo(self):
+
+        if self.tamano == 0:
+            return (0, [])
+
+        verticesVisitados = [list(self.listaAdy.keys())[0]]
+
+        conexionesArbol = []
+
+        pesoTotal = 0
+
+        while len(verticesVisitados) < self.tamano:
+
+            mejorPeso = float('inf')
+            origenElegido = None
+            destinoElegido = None
+
+            for vertice in verticesVisitados:
+
+                for conexion in self.listaAdy[vertice]:
+
+                    if conexion['estado'] != 'disponible':
+                        continue
+
+                    vecino = conexion['destino']
+
+                    if vecino not in verticesVisitados:
+
+                        if conexion['distancia'] < mejorPeso:
+
+                            mejorPeso = conexion['distancia']
+                            origenElegido = vertice
+                            destinoElegido = vecino
+
+            verticesVisitados.append(destinoElegido)
+
+            conexionesArbol.append(
+                (
+                    origenElegido,
+                    destinoElegido,
+                    mejorPeso
+                )
+            )
+
+            pesoTotal += mejorPeso
+
+        return (pesoTotal, conexionesArbol)        
+
     
 
 campus = GrafoCampus()
